@@ -6,6 +6,7 @@ import (
 	cors "qanc/src/controllers/cors"
 	conn "qanc/src/database/connection"
 	loadenv "qanc/src/loadenv"
+	routes "qanc/src/routes"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -23,8 +24,7 @@ func main() {
 
 	log.Printf("Server started on port: %s", port)
 
-	// routes.SetupProviderRoutes(app)
-	// routes.SetupAuthRoutes(app, conn.DB)
+	routes.SetupAuthRoutes(app, conn.DB)
 	// routes.SetupUserRoutes(app, conn.DB)
 	// routes.SetupLabRoutes(app, conn.DB)
 
