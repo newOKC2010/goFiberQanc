@@ -1,0 +1,89 @@
+package loadEnv
+
+import (
+	"log"
+	"os"
+	"strconv"
+	"strings"
+
+	"github.com/joho/godotenv"
+)
+
+func init() {
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found")
+	}
+}
+
+func LoadEmail() EmailConfig {
+	if err := godotenv.Load(); err != nil {
+		panic(err)
+	}
+	return EmailConfig{
+		Email:    os.Getenv("EMAIL"),
+		Password: os.Getenv("EMAIL_PASSWORD"),
+	}
+}
+
+func LoadMOPHAlert() MOPHAlertConfig {
+	if err := godotenv.Load(); err != nil {
+		panic(err)
+	}
+	return MOPHAlertConfig{
+		URL:       os.Getenv("MOPH_ALERT_URL"),
+		Method:    os.Getenv("MOPH_ALERT_METHOD"),
+		ClientID:  os.Getenv("MOPH_ALERT_CLIENT_ID"),
+		SecretKey: os.Getenv("MOPH_ALERT_SECRET_KEY"),
+	}
+}
+
+func LoadDBconnec() string {
+	if err := godotenv.Load(); err != nil {
+		panic(err)
+	}
+	return os.Getenv("DB_URL")
+}
+
+func LoadPort() string {
+	if err := godotenv.Load(); err != nil {
+		panic(err)
+	}
+	return os.Getenv("PORT")
+}
+
+func LoadCreateModel() string {
+	if err := godotenv.Load(); err != nil {
+		panic(err)
+	}
+	return os.Getenv("CREATE_MODEL")
+}
+
+func LoadCORS() CORS {
+	if err := godotenv.Load(); err != nil {
+		panic(err)
+	}
+	credentials, _ := strconv.ParseBool(os.Getenv("CORS_CREDENTIALS"))
+	return CORS{
+		Origins:     strings.Split(os.Getenv("CORS_ORIGINS"), ","),
+		Credentials: credentials,
+		Methods:     strings.Split(os.Getenv("CORS_METHODS"), ","),
+		Headers:     strings.Split(os.Getenv("CORS_HEADERS"), ","),
+	}
+}
+
+func LoadJWT() JWT {
+	if err := godotenv.Load(); err != nil {
+		panic(err)
+	}
+	return JWT{
+		Secret:   os.Getenv("JWT_SECRET"),
+		ExpireIn: os.Getenv("JWT_EXPIRES_IN"),
+	}
+}
+
+func LoadOTPExpiresIn() string {
+	if err := godotenv.Load(); err != nil {
+		panic(err)
+	}
+	return os.Getenv("OTP_EXPIRES_IN")
+}
