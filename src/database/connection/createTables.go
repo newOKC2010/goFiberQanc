@@ -44,6 +44,8 @@ func CreateTables(db *sql.DB) error {
 	CREATE TABLE IF NOT EXISTS anc_bookings (
 		id SERIAL PRIMARY KEY,                                     -- รหัสการจอง
 		slot_id INT NOT NULL REFERENCES anc_slots(id) ON DELETE CASCADE,  -- อ้างอิงวันที่จอง
+		cid VARCHAR(13),                                           -- เลขบัตรประชาชน (13 หลัก)
+		passport_no VARCHAR(20),                                   -- เลข Passport (กรณีไม่มีบัตรประชาชน)
 		queue_no INT NOT NULL,                                     -- หมายเลขคิว
 
 		-- ข้อมูลพื้นฐาน
