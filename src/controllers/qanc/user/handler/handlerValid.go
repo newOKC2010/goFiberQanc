@@ -11,8 +11,13 @@ func ValidateBookingRequest(req qancUtils.BookingRequest) string {
 	if strings.TrimSpace(req.SlotDate) == "" {
 		return "กรุณาระบุวันที่จอง"
 	}
-	if _, err := time.Parse("2006-01-02", strings.TrimSpace(req.SlotDate)); err != nil {
+	parsedDate, err := time.Parse("2006-01-02", strings.TrimSpace(req.SlotDate))
+	if err != nil {
 		return "รูปแบบวันที่ไม่ถูกต้อง (YYYY-MM-DD)"
+	}
+	today := time.Now().Truncate(24 * time.Hour)
+	if !parsedDate.After(today) {
+		return "ไม่สามารถจองวันที่ผ่านมาแล้วหรือวันนี้ได้ กรุณาเลือกวันในอนาคต"
 	}
 	cid := strings.TrimSpace(req.Cid)
 	passport := strings.TrimSpace(req.PassportNo)

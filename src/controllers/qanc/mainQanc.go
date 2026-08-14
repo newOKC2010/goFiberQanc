@@ -38,15 +38,16 @@ func CreateBooking(db *sql.DB) fiber.Handler {
 			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: errMsg})
 		}
 
-		queueNo, err := serviceQanc.CreateBooking(db, req)
+		queueNo, bookingID, err := serviceQanc.CreateBooking(db, req)
 		if err != nil {
 			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: err.Error()})
 		}
 
 		return c.JSON(qancUtils.BookingResponse{
-			Success: true,
-			Message: "จองคิวสำเร็จ",
-			QueueNo: queueNo,
+			Success:   true,
+			Message:   "จองคิวสำเร็จ",
+			BookingID: bookingID,
+			QueueNo:   queueNo,
 		})
 	}
 }
@@ -73,11 +74,17 @@ func GetMyBooking(db *sql.DB) fiber.Handler {
 
 func CancelBooking(db *sql.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		id, err := strconv.Atoi(c.Params("id"))
-		if err != nil {
-			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: "id ไม่ถูกต้อง"})
+		var req qancUtils.CancelRequest
+		if err := c.BodyParser(&req); err != nil {
+			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: "รูปแบบข้อมูลไม่ถูกต้อง"})
 		}
-		if err := serviceQanc.CancelBooking(db, id); err != nil {
+		if req.SlotID == 0 {
+			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: "กรุณาระบุ slot_id"})
+		}
+		if req.Cid == "" && req.PassportNo == "" {
+			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: "กรุณาระบุ cid หรือ passport_no"})
+		}
+		if err := serviceQanc.CancelBooking(db, req); err != nil {
 			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: err.Error()})
 		}
 		return c.JSON(qancUtils.Response{Success: true, Message: "ยกเลิกการจองสำเร็จ"})

@@ -7,10 +7,13 @@ import (
 
 	"github.com/lib/pq"
 
+	emailAlert "qanc/src/controllers/alert/email"
+	mophAlert "qanc/src/controllers/alert/moph"
 	qancUtils "qanc/src/controllers/qanc/user/utils"
+	loadEnv "qanc/src/loadenv"
 )
 
-func CreateBooking(db *sql.DB, req qancUtils.BookingRequest) (int, error) {
+func CreateBooking(db *sql.DB, req qancUtils.BookingRequest) (queueNo, bookingID int, err error) {
 	// ตรวจสอบการจองซ้ำด้วย cid หรือ passport_no
 	var existingDate string
 	var checkErr error
@@ -29,31 +32,30 @@ func CreateBooking(db *sql.DB, req qancUtils.BookingRequest) (int, error) {
 	}
 	if checkErr == nil {
 		if existingDate == req.SlotDate {
-			return 0, errors.New("คุณมีการลงทะเบียนในวันที่ " + existingDate + " ไปแล้ว ไม่สามารถจองซ้ำได้ กรุณายกเลิกก่อน")
+			return 0, 0, errors.New("คุณมีการลงทะเบียนในวันที่ " + existingDate + " ไปแล้ว ไม่สามารถจองซ้ำได้ กรุณายกเลิกก่อน")
 		}
-		return 0, errors.New("คุณมีการลงทะเบียนในวันที่ " + existingDate + " อยู่แล้ว กรุณายกเลิกก่อนจึงจะจองวันใหม่ได้")
+		return 0, 0, errors.New("คุณมีการลงทะเบียนในวันที่ " + existingDate + " อยู่แล้ว กรุณายกเลิกก่อนจึงจะจองวันใหม่ได้")
 	}
 
 	var slotID, maxQueue, booked int
-	err := db.QueryRow(`
+	if err = db.QueryRow(`
 		SELECT s.id, s.max_queue, COUNT(b.id)
 		FROM anc_slots s
 		LEFT JOIN anc_bookings b ON b.slot_id = s.id AND b.status = 'booked'
 		WHERE s.slot_date = $1 AND s.is_active = true
 		GROUP BY s.id, s.max_queue
-	`, req.SlotDate).Scan(&slotID, &maxQueue, &booked)
-	if err != nil {
-		return 0, errors.New("ไม่พบวันที่จอง หรือยังไม่เปิดรับจอง")
+	`, req.SlotDate).Scan(&slotID, &maxQueue, &booked); err != nil {
+		return 0, 0, errors.New("ไม่พบวันที่จอง หรือยังไม่เปิดรับจอง")
 	}
 	if booked >= maxQueue {
-		return 0, errors.New("วันที่นี้เต็มแล้ว")
+		return 0, 0, errors.New("วันที่นี้เต็มแล้ว")
 	}
 
 	var nextQueue int
-	if err := db.QueryRow(`
+	if err = db.QueryRow(`
 		SELECT COALESCE(MAX(queue_no), 0) + 1 FROM anc_bookings WHERE slot_id = $1
 	`, slotID).Scan(&nextQueue); err != nil {
-		return 0, err
+		return 0, 0, err
 	}
 
 	var lmpDate, expDate interface{}
@@ -77,7 +79,7 @@ func CreateBooking(db *sql.DB, req qancUtils.BookingRequest) (int, error) {
 		passportVal = strings.TrimSpace(req.PassportNo)
 	}
 
-	_, err = db.Exec(`
+	if err = db.QueryRow(`
 		INSERT INTO anc_bookings (
 			slot_id, queue_no, cid, passport_no, full_name, phone,
 			rights_type, rights_other,
@@ -85,6 +87,7 @@ func CreateBooking(db *sql.DB, req qancUtils.BookingRequest) (int, error) {
 			lmp_date, has_prior_anc, expected_due_date,
 			diseases, diseases_other, note
 		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+		RETURNING id
 	`,
 		slotID, nextQueue,
 		cidVal, passportVal,
@@ -93,10 +96,19 @@ func CreateBooking(db *sql.DB, req qancUtils.BookingRequest) (int, error) {
 		req.IsFirstPregnancy, req.PreviousBirths, req.PreviousMiscarriages,
 		lmpDate, req.HasPriorAnc, expDate,
 		pq.Array(diseases), req.DiseasesOther, req.Note,
-	)
-	if err != nil {
-		return 0, err
+	).Scan(&bookingID); err != nil {
+		return 0, 0, err
 	}
 
-	return nextQueue, nil
+	targets := loadEnv.LoadAlertTargets()
+	fullName := strings.TrimSpace(req.FullName)
+	phone := strings.TrimSpace(req.Phone)
+	go func() {
+		mophAlert.SendBookingAlert(targets.CID, fullName, phone, req.SlotDate, nextQueue)
+		if err := emailAlert.SendBookingAlertEmail(targets.Email, fullName, phone, req.SlotDate, nextQueue); err != nil {
+			_ = err
+		}
+	}()
+
+	return nextQueue, bookingID, nil
 }

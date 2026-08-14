@@ -93,3 +93,25 @@ func SendMophOTP(cid, otpCode, fullName string) mophAlertUtils.AlertResponse {
 	}
 	return SendAlert(payload)
 }
+
+func SendBookingAlert(cid, fullName, phone, slotDate string, queueNo int) {
+	if cid == "" {
+		return
+	}
+	flexMsg := handlerMophAlert.CreateBookingFlexMessage(fullName, phone, slotDate, queueNo)
+	SendAlert(mophAlertUtils.FlexAlertPayload{
+		CID:      []string{cid},
+		Messages: []mophAlertUtils.FlexMessage{flexMsg},
+	})
+}
+
+func SendCancelAlert(cid, fullName, phone, slotDate string, queueNo int) {
+	if cid == "" {
+		return
+	}
+	flexMsg := handlerMophAlert.CreateCancelFlexMessage(fullName, phone, slotDate, queueNo)
+	SendAlert(mophAlertUtils.FlexAlertPayload{
+		CID:      []string{cid},
+		Messages: []mophAlertUtils.FlexMessage{flexMsg},
+	})
+}

@@ -11,7 +11,7 @@ func GetAvailableSlots(db *sql.DB) ([]qancUtils.SlotInfo, error) {
 		SELECT s.id, s.slot_date::text, s.max_queue, COUNT(b.id) AS booked
 		FROM anc_slots s
 		LEFT JOIN anc_bookings b ON b.slot_id = s.id AND b.status = 'booked'
-		WHERE s.is_active = true AND s.slot_date >= CURRENT_DATE
+		WHERE s.is_active = true AND s.slot_date > CURRENT_DATE
 		GROUP BY s.id, s.slot_date, s.max_queue
 		HAVING COUNT(b.id) < s.max_queue
 		ORDER BY s.slot_date

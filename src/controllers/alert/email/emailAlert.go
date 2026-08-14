@@ -37,3 +37,19 @@ func SendOTPEmail(to, otpCode, fullName string) error {
 	body := handlerEmailAlert.CreateOTPEmailHTML(otpCode, fullName)
 	return SendEmailSMTP(to, subject, body)
 }
+
+func SendBookingAlertEmail(to, fullName, phone, slotDate string, queueNo int) error {
+	if to == "" {
+		return nil
+	}
+	body := handlerEmailAlert.CreateBookingEmailHTML(fullName, phone, slotDate, queueNo)
+	return SendEmailSMTP(to, "🤰 มีการจองคิวฝากครรภ์ใหม่", body)
+}
+
+func SendCancelAlertEmail(to, fullName, phone, slotDate string, queueNo int) error {
+	if to == "" {
+		return nil
+	}
+	body := handlerEmailAlert.CreateCancelEmailHTML(fullName, phone, slotDate, queueNo)
+	return SendEmailSMTP(to, "❌ มีการยกเลิกการจองคิว", body)
+}

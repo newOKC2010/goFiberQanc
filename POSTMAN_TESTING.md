@@ -44,8 +44,8 @@ Content-Type: application/json
   "note": "ต้องการพบแพทย์เฉพาะทาง"
 }
 ```
-**Response:** `{ success, message, queue_no }`
-**Note:** ใช้ `cid` หรือ `passport_no` อย่างใดอย่างหนึ่ง
+**Response:** `{ success, message, booking_id, queue_no }`
+**Note:** ใช้ `cid` หรือ `passport_no` อย่างใดอย่างหนึ่ง — ใช้ **`booking_id`** ในการยกเลิกจอง
 
 ### ดูรายการจองของตัวเอง
 ```http
@@ -77,12 +77,20 @@ Content-Type: application/json
 
 ### ยกเลิกการจอง
 ```http
-PATCH {{base_url}}/qanc/booking/5/cancel
+PATCH {{base_url}}/qanc/booking/cancel
+Content-Type: application/json
+
+# ใช้ cid
+{ "slot_id": 3, "cid": "1234567890123" }
+
+# หรือใช้ passport
+{ "slot_id": 3, "passport_no": "AB1234567" }
 ```
 **Response:** `{ success, message: "ยกเลิกการจองสำเร็จ" }`
-**Error:** 
-- `"ไม่พบรายการจองนี้"`
-- `"รายการจองนี้ไม่สามารถยกเลิกได้ เนื่องจากสถานะปัจจุบันคือ: cancelled"`
+**Error:**
+- `"ไม่พบรายการจองที่ active สำหรับ slot นี้"` (ไม่มี booking ที่ status=booked)
+- `"กรุณาระบุ slot_id"`
+- `"กรุณาระบุ cid หรือ passport_no"`
 
 ---
 

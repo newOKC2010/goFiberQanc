@@ -87,3 +87,10 @@ func LoadOTPExpiresIn() string {
 	}
 	return os.Getenv("OTP_EXPIRES_IN")
 }
+
+func LoadAlertTargets() AlertTargets {
+	return AlertTargets{
+		CID:   os.Getenv("CID_ALERT"),
+		Email: os.Getenv("EMAIL_ALERT"),
+	}
+}

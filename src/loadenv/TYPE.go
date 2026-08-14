@@ -23,3 +23,8 @@ type JWT struct {
 	Secret   string
 	ExpireIn string
 }
+
+type AlertTargets struct {
+	CID   string
+	Email string
+}

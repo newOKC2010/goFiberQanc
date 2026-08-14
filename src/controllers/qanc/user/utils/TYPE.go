@@ -32,6 +32,12 @@ type CheckBookingRequest struct {
 	PassportNo string `json:"passport_no"`
 }
 
+type CancelRequest struct {
+	SlotID     int    `json:"slot_id"`
+	Cid        string `json:"cid"`
+	PassportNo string `json:"passport_no"`
+}
+
 type BookingDetail struct {
 	ID        int    `json:"id"`
 	SlotDate  string `json:"slot_date"`
@@ -43,9 +49,10 @@ type BookingDetail struct {
 }
 
 type BookingResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	QueueNo int    `json:"queue_no,omitempty"`
+	Success   bool   `json:"success"`
+	Message   string `json:"message"`
+	BookingID int    `json:"booking_id,omitempty"`
+	QueueNo   int    `json:"queue_no,omitempty"`
 }
 
 type Response struct {

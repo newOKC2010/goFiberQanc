@@ -15,10 +15,10 @@ func SetupQancRoutes(app fiber.Router, db *sql.DB) {
 	prefix := app.Group("/qanc")
 
 	// User - เส้นทางสำหรับผู้ใช้ทั่วไป (ไม่ต้อง login)
-	prefix.Get("/slots", ratelimit.RateLimitByIP(60, 1*time.Minute), mainQanc.GetSlots(db))                    // 60 req/นาที
-	prefix.Post("/booking", ratelimit.RateLimitByIP(5, 1*time.Minute), mainQanc.CreateBooking(db))             // 5 req/นาที
-	prefix.Post("/booking/check", ratelimit.RateLimitByIP(20, 1*time.Minute), mainQanc.GetMyBooking(db))       // 20 req/นาที
-	prefix.Patch("/booking/:id/cancel", ratelimit.RateLimitByIP(5, 1*time.Minute), mainQanc.CancelBooking(db)) // 5 req/นาที
+	prefix.Get("/slots", ratelimit.RateLimitByIP(60, 1*time.Minute), mainQanc.GetSlots(db))                 // 60 req/นาที
+	prefix.Post("/booking", ratelimit.RateLimitByIP(10, 1*time.Minute), mainQanc.CreateBooking(db))         // 10 req/นาที
+	prefix.Post("/booking/check", ratelimit.RateLimitByIP(20, 1*time.Minute), mainQanc.GetMyBooking(db))    // 20 req/นาที
+	prefix.Patch("/booking/cancel", ratelimit.RateLimitByIP(10, 1*time.Minute), mainQanc.CancelBooking(db)) // 10 req/นาที
 
 	// Admin - เส้นทางสำหรับเจ้าหน้าที่ (ต้อง login + role: admin/super_admin)
 	admin := prefix.Group("/admin", middleware.AuthGuards(db, []string{"admin", "super_admin"}), ratelimit.RateLimitByIP(60, 1*time.Minute))
