@@ -7,7 +7,7 @@
 | `/qanc/slots` | GET | ❌ | ดูวันว่าง |
 | `/qanc/booking` | POST | ❌ | จองคิว |
 | `/qanc/booking/check` | POST | ❌ | ดูรายการจองตัวเอง |
-| `/qanc/booking/:id/cancel` | PATCH | ❌ | ยกเลิกการจอง |
+| `/qanc/booking/cancel` | PATCH | ❌ | ยกเลิกการจอง |
 | `/qanc/admin/slots` | GET | ✅ | ดูวันทั้งหมด |
 | `/qanc/admin/slots` | POST | ✅ | เพิ่มวันใหม่ |
 | `/qanc/admin/slots/:id` | PUT | ✅ | แก้ไขจำนวนคิว |
@@ -45,7 +45,7 @@ Content-Type: application/json
 }
 ```
 **Response:** `{ success, message, booking_id, queue_no }`
-**Note:** ใช้ `cid` หรือ `passport_no` อย่างใดอย่างหนึ่ง — ใช้ **`booking_id`** ในการยกเลิกจอง
+**Note:** ใช้ `cid` หรือ `passport_no` อย่างใดอย่างหนึ่ง
 
 ### ดูรายการจองของตัวเอง
 ```http
@@ -183,9 +183,9 @@ token = (auto-set หลัง login)
 | Scenario | Steps |
 |----------|-------|
 | **จองคิวสำเร็จ** | 1. GET slots → 2. POST booking → 3. GET slots (เห็นคิวลด) |
-| **ดูและยกเลิกการจอง** | 1. POST booking/check → 2. PATCH booking/:id/cancel → 3. POST booking/check (ไม่พบ) |
+| **ดูและยกเลิกการจอง** | 1. POST booking/check → 2. PATCH booking/cancel (ส่ง slot_id + cid) → 3. POST booking/check (ไม่พบ) |
 | **Admin เพิ่มวัน** | 1. Login → 2. POST admin/slots → 3. GET slots (user เห็นวันใหม่) |
-| **Admin ปิดรับจอง** | 1. PATCH slots/:id `is_active: false` → 2. GET slots (user ไม่เห็น) |
+| **Admin ปิดรับจอง** | 1. POST admin/slots/toggle `{id, is_active: false}` → 2. GET slots (user ไม่เห็น) |
 
 ---
 
