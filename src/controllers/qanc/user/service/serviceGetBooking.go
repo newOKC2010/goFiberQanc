@@ -6,10 +6,11 @@ import (
 	"strings"
 
 	qancUtils "qanc/src/controllers/qanc/user/utils"
+	"qanc/src/i18n"
 )
 
 // GetMyBooking - ดึงข้อมูลการจองของตัวเองด้วย cid หรือ passport_no
-func GetMyBooking(db *sql.DB, cid, passportNo string) (*qancUtils.BookingDetail, error) {
+func GetMyBooking(db *sql.DB, cid, passportNo, lang string) (*qancUtils.BookingDetail, error) {
 	var row *sql.Row
 
 	if strings.TrimSpace(cid) != "" {
@@ -33,7 +34,7 @@ func GetMyBooking(db *sql.DB, cid, passportNo string) (*qancUtils.BookingDetail,
 	var b qancUtils.BookingDetail
 	if err := row.Scan(&b.ID, &b.SlotDate, &b.QueueNo, &b.FullName, &b.Phone, &b.Status, &b.CreatedAt); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.New("ไม่พบรายการจองที่ active อยู่")
+			return nil, errors.New(i18n.T(lang, "ไม่พบรายการจองที่ active อยู่", "No active booking found"))
 		}
 		return nil, err
 	}

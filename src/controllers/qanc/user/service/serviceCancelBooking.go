@@ -8,12 +8,13 @@ import (
 	emailAlert "qanc/src/controllers/alert/email"
 	mophAlert "qanc/src/controllers/alert/moph"
 	qancUtils "qanc/src/controllers/qanc/user/utils"
+	"qanc/src/i18n"
 	loadEnv "qanc/src/loadenv"
 )
 
 // CancelBooking - ยกเลิกการจองด้วย slot_id + cid หรือ passport_no
 // ค้นหา booking ที่ status='booked' ล่าสุด แล้วเปลี่ยนเป็น 'cancelled'
-func CancelBooking(db *sql.DB, req qancUtils.CancelRequest) error {
+func CancelBooking(db *sql.DB, req qancUtils.CancelRequest, lang string) error {
 	var bookingID, queueNo int
 	var fullName, phone, slotDate string
 
@@ -40,7 +41,7 @@ func CancelBooking(db *sql.DB, req qancUtils.CancelRequest) error {
 	}
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return errors.New("ไม่พบรายการจองที่ active สำหรับ slot นี้")
+			return errors.New(i18n.T(lang, "ไม่พบรายการจองที่ active สำหรับ slot นี้", "No active booking found for this slot"))
 		}
 		return err
 	}

@@ -10,10 +10,11 @@ import (
 	emailAlert "qanc/src/controllers/alert/email"
 	mophAlert "qanc/src/controllers/alert/moph"
 	qancUtils "qanc/src/controllers/qanc/user/utils"
+	"qanc/src/i18n"
 	loadEnv "qanc/src/loadenv"
 )
 
-func CreateBooking(db *sql.DB, req qancUtils.BookingRequest) (queueNo, bookingID int, err error) {
+func CreateBooking(db *sql.DB, req qancUtils.BookingRequest, lang string) (queueNo, bookingID int, err error) {
 	// ตรวจสอบการจองซ้ำด้วย cid หรือ passport_no
 	var existingDate string
 	var checkErr error
@@ -32,9 +33,15 @@ func CreateBooking(db *sql.DB, req qancUtils.BookingRequest) (queueNo, bookingID
 	}
 	if checkErr == nil {
 		if existingDate == req.SlotDate {
-			return 0, 0, errors.New("คุณมีการลงทะเบียนในวันที่ " + existingDate + " ไปแล้ว ไม่สามารถจองซ้ำได้ กรุณายกเลิกก่อน")
+			return 0, 0, errors.New(i18n.Tf(lang,
+				"คุณมีการลงทะเบียนในวันที่ %s ไปแล้ว ไม่สามารถจองซ้ำได้ กรุณายกเลิกก่อน",
+				"You already have a booking on %s. Please cancel it first.",
+				existingDate))
 		}
-		return 0, 0, errors.New("คุณมีการลงทะเบียนในวันที่ " + existingDate + " อยู่แล้ว กรุณายกเลิกก่อนจึงจะจองวันใหม่ได้")
+		return 0, 0, errors.New(i18n.Tf(lang,
+			"คุณมีการลงทะเบียนในวันที่ %s อยู่แล้ว กรุณายกเลิกก่อนจึงจะจองวันใหม่ได้",
+			"You already have a booking on %s. Please cancel before booking a new date.",
+			existingDate))
 	}
 
 	var slotID, maxQueue, booked int
@@ -45,10 +52,10 @@ func CreateBooking(db *sql.DB, req qancUtils.BookingRequest) (queueNo, bookingID
 		WHERE s.slot_date = $1 AND s.is_active = true
 		GROUP BY s.id, s.max_queue
 	`, req.SlotDate).Scan(&slotID, &maxQueue, &booked); err != nil {
-		return 0, 0, errors.New("ไม่พบวันที่จอง หรือยังไม่เปิดรับจอง")
+		return 0, 0, errors.New(i18n.T(lang, "ไม่พบวันที่จอง หรือยังไม่เปิดรับจอง", "Slot not found or not yet open for booking"))
 	}
 	if booked >= maxQueue {
-		return 0, 0, errors.New("วันที่นี้เต็มแล้ว")
+		return 0, 0, errors.New(i18n.T(lang, "วันที่นี้เต็มแล้ว", "This date is fully booked"))
 	}
 
 	var nextQueue int

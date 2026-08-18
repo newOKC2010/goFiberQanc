@@ -12,16 +12,18 @@ import (
 	handlerQanc "qanc/src/controllers/qanc/user/handler"
 	serviceQanc "qanc/src/controllers/qanc/user/service"
 	qancUtils "qanc/src/controllers/qanc/user/utils"
+	"qanc/src/i18n"
 )
 
 func GetSlots(db *sql.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		lang := i18n.GetLang(c)
 		slots, err := serviceQanc.GetAvailableSlots(db)
 		if err != nil {
-			return c.Status(500).JSON(qancUtils.Response{Success: false, Message: "ไม่สามารถดึงข้อมูลได้ กรุณาลองใหม่อีกครั้ง"})
+			return c.Status(500).JSON(qancUtils.Response{Success: false, Message: i18n.T(lang, "ไม่สามารถดึงข้อมูลได้ กรุณาลองใหม่อีกครั้ง", "Unable to fetch data, please try again")})
 		}
 		if len(slots) == 0 {
-			return c.JSON(qancUtils.Response{Success: false, Message: "ขณะนี้ยังไม่มีวันเปิดให้จอง", Data: []qancUtils.SlotInfo{}})
+			return c.JSON(qancUtils.Response{Success: false, Message: i18n.T(lang, "ขณะนี้ยังไม่มีวันเปิดให้จอง", "No available dates at this time"), Data: []qancUtils.SlotInfo{}})
 		}
 		return c.JSON(qancUtils.Response{Success: true, Data: slots})
 	}
@@ -29,23 +31,24 @@ func GetSlots(db *sql.DB) fiber.Handler {
 
 func CreateBooking(db *sql.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		lang := i18n.GetLang(c)
 		var req qancUtils.BookingRequest
 		if err := c.BodyParser(&req); err != nil {
-			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: "รูปแบบข้อมูลไม่ถูกต้อง กรุณาตรวจสอบข้อมูลที่ส่งมา"})
+			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: i18n.T(lang, "รูปแบบข้อมูลไม่ถูกต้อง กรุณาตรวจสอบข้อมูลที่ส่งมา", "Invalid request format, please check your data")})
 		}
 
-		if errMsg := handlerQanc.ValidateBookingRequest(req); errMsg != "" {
+		if errMsg := handlerQanc.ValidateBookingRequest(req, lang); errMsg != "" {
 			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: errMsg})
 		}
 
-		queueNo, bookingID, err := serviceQanc.CreateBooking(db, req)
+		queueNo, bookingID, err := serviceQanc.CreateBooking(db, req, lang)
 		if err != nil {
 			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: err.Error()})
 		}
 
 		return c.JSON(qancUtils.BookingResponse{
 			Success:   true,
-			Message:   "จองคิวสำเร็จ",
+			Message:   i18n.T(lang, "จองคิวสำเร็จ", "Booking successful"),
 			BookingID: bookingID,
 			QueueNo:   queueNo,
 		})
@@ -54,17 +57,18 @@ func CreateBooking(db *sql.DB) fiber.Handler {
 
 func GetMyBooking(db *sql.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		lang := i18n.GetLang(c)
 		var req qancUtils.CheckBookingRequest
 		if err := c.BodyParser(&req); err != nil {
-			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: "รูปแบบข้อมูลไม่ถูกต้อง"})
+			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: i18n.T(lang, "รูปแบบข้อมูลไม่ถูกต้อง", "Invalid request format")})
 		}
 		if req.Cid == "" && req.PassportNo == "" {
-			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: "กรุณาระบุ cid หรือ passport_no"})
+			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: i18n.T(lang, "กรุณาระบุ cid หรือ passport_no", "Please provide cid or passport_no")})
 		}
 		if req.Cid != "" && req.PassportNo != "" {
-			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: "ระบุได้เพียงอย่างใดอย่างหนึ่ง"})
+			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: i18n.T(lang, "ระบุได้เพียงอย่างใดอย่างหนึ่ง", "Provide only one: cid or passport_no")})
 		}
-		booking, err := serviceQanc.GetMyBooking(db, req.Cid, req.PassportNo)
+		booking, err := serviceQanc.GetMyBooking(db, req.Cid, req.PassportNo, lang)
 		if err != nil {
 			return c.Status(404).JSON(qancUtils.Response{Success: false, Message: err.Error()})
 		}
@@ -74,20 +78,21 @@ func GetMyBooking(db *sql.DB) fiber.Handler {
 
 func CancelBooking(db *sql.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		lang := i18n.GetLang(c)
 		var req qancUtils.CancelRequest
 		if err := c.BodyParser(&req); err != nil {
-			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: "รูปแบบข้อมูลไม่ถูกต้อง"})
+			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: i18n.T(lang, "รูปแบบข้อมูลไม่ถูกต้อง", "Invalid request format")})
 		}
 		if req.SlotID == 0 {
-			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: "กรุณาระบุ slot_id"})
+			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: i18n.T(lang, "กรุณาระบุ slot_id", "Please provide slot_id")})
 		}
 		if req.Cid == "" && req.PassportNo == "" {
-			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: "กรุณาระบุ cid หรือ passport_no"})
+			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: i18n.T(lang, "กรุณาระบุ cid หรือ passport_no", "Please provide cid or passport_no")})
 		}
-		if err := serviceQanc.CancelBooking(db, req); err != nil {
+		if err := serviceQanc.CancelBooking(db, req, lang); err != nil {
 			return c.Status(400).JSON(qancUtils.Response{Success: false, Message: err.Error()})
 		}
-		return c.JSON(qancUtils.Response{Success: true, Message: "ยกเลิกการจองสำเร็จ"})
+		return c.JSON(qancUtils.Response{Success: true, Message: i18n.T(lang, "ยกเลิกการจองสำเร็จ", "Booking cancelled successfully")})
 	}
 }
 
