@@ -22,13 +22,13 @@ func CreateBooking(db *sql.DB, req qancUtils.BookingRequest, lang string) (queue
 		checkErr = db.QueryRow(`
 			SELECT s.slot_date::text FROM anc_bookings b
 			JOIN anc_slots s ON s.id = b.slot_id
-			WHERE b.cid = $1 AND b.status = 'booked' LIMIT 1
+			WHERE b.cid = $1 AND b.status = 'booked' AND s.slot_date >= CURRENT_DATE LIMIT 1
 		`, req.Cid).Scan(&existingDate)
 	} else {
 		checkErr = db.QueryRow(`
 			SELECT s.slot_date::text FROM anc_bookings b
 			JOIN anc_slots s ON s.id = b.slot_id
-			WHERE b.passport_no = $1 AND b.status = 'booked' LIMIT 1
+			WHERE b.passport_no = $1 AND b.status = 'booked' AND s.slot_date >= CURRENT_DATE LIMIT 1
 		`, req.PassportNo).Scan(&existingDate)
 	}
 	if checkErr == nil {

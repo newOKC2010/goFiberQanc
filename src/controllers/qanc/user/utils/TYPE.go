@@ -40,6 +40,7 @@ type CancelRequest struct {
 
 type BookingDetail struct {
 	ID        int    `json:"id"`
+	SlotID    int    `json:"slot_id"`
 	SlotDate  string `json:"slot_date"`
 	QueueNo   int    `json:"queue_no"`
 	FullName  string `json:"full_name"`

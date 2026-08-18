@@ -26,8 +26,6 @@ func main() {
 
 	routes.SetupAuthRoutes(app, conn.DB)
 	routes.SetupQancRoutes(app, conn.DB)
-	// routes.SetupUserRoutes(app, conn.DB)
-	// routes.SetupLabRoutes(app, conn.DB)
 
 	if err := app.Listen(":" + port); err != nil {
 		log.Fatal(err)
