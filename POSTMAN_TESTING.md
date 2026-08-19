@@ -8,8 +8,8 @@
 | `/qanc/booking` | POST | ❌ | จองคิว |
 | `/qanc/booking/check` | POST | ❌ | ดูรายการจองตัวเอง |
 | `/qanc/booking/cancel` | PATCH | ❌ | ยกเลิกการจอง |
-| `/qanc/admin/slots` | GET | ✅ | ดูวันทั้งหมด |
-| `/qanc/admin/slots` | POST | ✅ | เพิ่มวันใหม่ |
+| `/qanc/admin/slots` | GET | ✅ | ดูวันทั้งหมด (pagination) |
+| `/qanc/admin/slots/bulk` | POST | ✅ | เพิ่มหลายวันพร้อมกัน |
 | `/qanc/admin/slots/:id` | PUT | ✅ | แก้ไขจำนวนคิว |
 | `/qanc/admin/slots/toggle` | POST | ✅ | เปิด/ปิดวัน |
 | `/qanc/admin/bookings` | GET | ✅ | ดูรายการจอง |
@@ -52,45 +52,19 @@ Content-Type: application/json
 POST {{base_url}}/qanc/booking/check
 Content-Type: application/json
 
-# ใช้เลขบัตรประชาชน
 { "cid": "1234567890123" }
-
-# หรือใช้ Passport
+# หรือ
 { "passport_no": "AB1234567" }
 ```
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 5,
-    "slot_date": "2026-08-15",
-    "queue_no": 3,
-    "full_name": "สมหญิง ใจดี",
-    "phone": "0812345678",
-    "status": "booked",
-    "created_at": "2026-08-13T10:00:00Z"
-  }
-}
-```
-**Error:** `"ไม่พบรายการจองที่ active อยู่"`
 
 ### ยกเลิกการจอง
 ```http
 PATCH {{base_url}}/qanc/booking/cancel
 Content-Type: application/json
 
-# ใช้ cid
 { "slot_id": 3, "cid": "1234567890123" }
-
-# หรือใช้ passport
-{ "slot_id": 3, "passport_no": "AB1234567" }
 ```
 **Response:** `{ success, message: "ยกเลิกการจองสำเร็จ" }`
-**Error:**
-- `"ไม่พบรายการจองที่ active สำหรับ slot นี้"` (ไม่มี booking ที่ status=booked)
-- `"กรุณาระบุ slot_id"`
-- `"กรุณาระบุ cid หรือ passport_no"`
 
 ---
 
@@ -102,34 +76,48 @@ Content-Type: application/json
 POST {{base_url}}/auth/req
 { "email": "admin@example.com" }
 
-# 2. ยืนยัน OTP
+# 2. ยืนยัน OTP → ได้ token
 POST {{base_url}}/auth/verify
 { "email": "admin@example.com", "otp": "123456" }
-→ Response: { success, token, user }
 ```
 
 **Postman Auto-Save Token** (Tab: Tests)
 ```javascript
-var jsonData = pm.response.json();
-if (jsonData.success) pm.environment.set("token", jsonData.token);
+var r = pm.response.json();
+if (r.success) pm.environment.set("token", r.token);
 ```
 
 ### ดูวันทั้งหมด
 ```http
-GET {{base_url}}/qanc/admin/slots
+GET {{base_url}}/qanc/admin/slots?page=1&limit=10
 Authorization: Bearer {{token}}
 ```
-**Response:** `{ success, data: [{ id, slot_date, max_queue, booked, is_active }] }`
+**Response:** `{ success, data: [...], pagination: { count, total_count, total_pages, current_page } }`
+**Note:** limit สูงสุด 1000
 
-### เพิ่มวันใหม่
+### เพิ่มหลายวันพร้อมกัน
 ```http
-POST {{base_url}}/qanc/admin/slots
+POST {{base_url}}/qanc/admin/slots/bulk
 Authorization: Bearer {{token}}
 
-{ "slot_date": "2026-08-15", "max_queue": 25 }
+{
+  "slot_dates": ["2026-09-01", "2026-09-03", "2026-09-05"],
+  "max_queue": 20
+}
 ```
-**Response:** `{ success, message }`
-**Error:** วันซ้ำ / วันย้อนหลัง / วันปัจจุบัน
+**Response:**
+```json
+{
+  "success": true,
+  "message": "เพิ่มสำเร็จ 3/3 วัน",
+  "results": [
+    { "slot_date": "2026-09-01", "success": true },
+    { "slot_date": "2026-09-03", "success": true },
+    { "slot_date": "2026-09-05", "success": false, "message": "วันนี้มีอยู่ในระบบแล้ว" }
+  ]
+}
+```
+**Error:** วันย้อนหลัง / วันปัจจุบัน / slot_dates ว่าง
 
 ### แก้ไขจำนวนคิว
 ```http
@@ -138,8 +126,7 @@ Authorization: Bearer {{token}}
 
 { "max_queue": 30 }
 ```
-**Response:** `{ success, message }`
-**Error:** `"ไม่สามารถลดคิวเหลือเป็น 5 เพราะมีการจองแล้ว 8 คิว"`
+**Error:** `"ไม่สามารถลดคิวเหลือ 5 เพราะมีการจองแล้ว 8 คิว"`
 
 ### เปิด/ปิดรับจอง
 ```http
@@ -148,58 +135,33 @@ Authorization: Bearer {{token}}
 
 { "id": 2, "is_active": false }
 ```
-**Response:** `{ success, message: "อัพเดทสำเร็จ" }`
-**Error:**
-- `"ไม่สามารถปิดรับจองได้ เนื่องจากมีการจองอยู่แล้ว 8 คิว"`
-- `"ไม่สามารถแก้ไขวันที่ผ่านมาแล้วได้"`
+**Error:** `"ไม่สามารถปิดรับจองได้ เนื่องจากมีการจองอยู่แล้ว 8 คิว"`
 
 ### ดูรายการจอง
 ```http
-# ทั้งหมด
-GET {{base_url}}/qanc/admin/bookings
-
-# กรองตามวัน
-GET {{base_url}}/qanc/admin/bookings?slot_date=2026-08-10
+GET {{base_url}}/qanc/admin/bookings?page=1&limit=10
+GET {{base_url}}/qanc/admin/bookings?slot_date=2026-09-01
+Authorization: Bearer {{token}}
 ```
 
 ---
 
 ## **Postman Setup**
 
-### Environment Variables
 ```
-base_url = http://localhost:3000
-token = (auto-set หลัง login)
+base_url = http://localhost:8081
+token    = (auto-set หลัง login)
 ```
-
-### Authorization
-- Type: **Bearer Token**
-- Token: `{{token}}`
-
----
-
-## **Test Scenarios**
-
-| Scenario | Steps |
-|----------|-------|
-| **จองคิวสำเร็จ** | 1. GET slots → 2. POST booking → 3. GET slots (เห็นคิวลด) |
-| **ดูและยกเลิกการจอง** | 1. POST booking/check → 2. PATCH booking/cancel (ส่ง slot_id + cid) → 3. POST booking/check (ไม่พบ) |
-| **Admin เพิ่มวัน** | 1. Login → 2. POST admin/slots → 3. GET slots (user เห็นวันใหม่) |
-| **Admin ปิดรับจอง** | 1. POST admin/slots/toggle `{id, is_active: false}` → 2. GET slots (user ไม่เห็น) |
+Authorization → Type: **Bearer Token** → `{{token}}`
 
 ---
 
 ## **Common Errors**
 
-| Code | Message | Cause |
-|------|---------|-------|
-| 400 | รูปแบบข้อมูลไม่ถูกต้อง | Invalid JSON/missing fields |
-| 401 | กรุณาเข้าสู่ระบบ | No token / expired |
-| 403 | ไม่มีสิทธิ์เข้าถึง | Wrong role |
-| 404 | ไม่พบวันที่ต้องการแก้ไข | Invalid slot ID |
-| 500 | ไม่สามารถดึงข้อมูลได้ | Database error |
-
-**Empty Data Response:**
-```json
-{ "success": false, "message": "ขณะนี้ยังไม่มีวันเปิดให้จอง", "data": [] }
-```
+| Code | Cause |
+|------|-------|
+| 400 | Invalid JSON / missing fields / วันย้อนหลัง |
+| 401 | No token / expired |
+| 403 | Wrong role |
+| 404 | ไม่พบ slot ID |
+| 500 | Database error |

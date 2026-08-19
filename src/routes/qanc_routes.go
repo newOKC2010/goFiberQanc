@@ -22,9 +22,9 @@ func SetupQancRoutes(app fiber.Router, db *sql.DB) {
 
 	// Admin - เส้นทางสำหรับเจ้าหน้าที่ (ต้อง login + role: admin/super_admin)
 	admin := prefix.Group("/admin", middleware.AuthGuards(db, []string{"admin", "super_admin"}), ratelimit.RateLimitByIP(60, 1*time.Minute))
-	admin.Get("/slots", mainQanc.AdminGetSlots(db))           // ดูวันทั้งหมด + จำนวนจอง + สถานะ
-	admin.Post("/slots", mainQanc.AdminCreateSlot(db))        // เพิ่มวันเปิดจองใหม่
-	admin.Put("/slots/:id", mainQanc.AdminUpdateSlot(db))     // แก้ไขจำนวนคิวตาม id
-	admin.Post("/slots/toggle", mainQanc.AdminToggleSlot(db)) // เปิด/ปิดรับจอง (body: { id, is_active })
-	admin.Get("/bookings", mainQanc.AdminGetBookings(db))     // ดูรายการจอง (filter: ?slot_date=)
+	admin.Get("/slots", mainQanc.AdminGetSlots(db))              // ดูวันทั้งหมด + จำนวนจอง + สถานะ
+	admin.Post("/slots/bulk", mainQanc.AdminCreateBulkSlots(db)) // เพิ่มหลายวันพร้อมกัน
+	admin.Put("/slots/:id", mainQanc.AdminUpdateSlot(db))        // แก้ไขจำนวนคิวตาม id
+	admin.Post("/slots/toggle", mainQanc.AdminToggleSlot(db))    // เปิด/ปิดรับจอง (body: { id, is_active })
+	admin.Get("/bookings", mainQanc.AdminGetBookings(db))        // ดูรายการจอง (filter: ?slot_date=)
 }

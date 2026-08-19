@@ -54,13 +54,18 @@ func GetAllSlots(db *sql.DB, page, limit int) ([]adminUtils.SlotInfo, *adminUtil
 	return slots, pagination, nil
 }
 
-// CreateSlot - เพิ่มวันเปิดจองใหม่
-// จะ error ถ้าวันนี้มีอยู่แล้ว (slot_date UNIQUE)
-func CreateSlot(db *sql.DB, slotDate string, maxQueue int) error {
-	_, err := db.Exec(`
-		INSERT INTO anc_slots (slot_date, max_queue) VALUES ($1, $2)
-	`, slotDate, maxQueue)
-	return err
+// CreateBulkSlots - เพิ่มหลายวันพร้อมกัน คืนผลลัพธ์แต่ละวัน
+func CreateBulkSlots(db *sql.DB, slotDates []string, maxQueue int) []adminUtils.BulkSlotResult {
+	results := make([]adminUtils.BulkSlotResult, 0, len(slotDates))
+	for _, date := range slotDates {
+		_, err := db.Exec(`INSERT INTO anc_slots (slot_date, max_queue) VALUES ($1, $2)`, date, maxQueue)
+		if err != nil {
+			results = append(results, adminUtils.BulkSlotResult{SlotDate: date, Success: false, Message: "วันนี้มีอยู่ในระบบแล้ว"})
+		} else {
+			results = append(results, adminUtils.BulkSlotResult{SlotDate: date, Success: true})
+		}
+	}
+	return results
 }
 
 // UpdateSlotMaxQueue - แก้ไขจำนวนคิวสูงสุดตาม id

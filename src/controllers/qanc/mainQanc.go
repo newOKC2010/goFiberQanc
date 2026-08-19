@@ -2,6 +2,7 @@ package mainQanc
 
 import (
 	"database/sql"
+	"fmt"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -105,8 +106,11 @@ func AdminGetSlots(db *sql.DB) fiber.Handler {
 		if page < 1 {
 			page = 1
 		}
-		if limit < 1 || limit > 100 {
+		if limit < 1 {
 			limit = 10
+		}
+		if limit > 1000 {
+			limit = 1000
 		}
 
 		slots, pagination, err := serviceAdminQanc.GetAllSlots(db, page, limit)
@@ -120,19 +124,27 @@ func AdminGetSlots(db *sql.DB) fiber.Handler {
 	}
 }
 
-func AdminCreateSlot(db *sql.DB) fiber.Handler {
+func AdminCreateBulkSlots(db *sql.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var req adminUtils.SlotRequest
+		var req adminUtils.BulkSlotRequest
 		if err := c.BodyParser(&req); err != nil {
-			return c.Status(400).JSON(adminUtils.Response{Success: false, Message: "รูปแบบข้อมูลไม่ถูกต้อง กรุณาตรวจสอบข้อมูลที่ส่งมา"})
+			return c.Status(400).JSON(adminUtils.Response{Success: false, Message: "รูปแบบข้อมูลไม่ถูกต้อง"})
 		}
-		if errMsg := handlerAdminQanc.ValidateSlotRequest(req); errMsg != "" {
+		if errMsg := handlerAdminQanc.ValidateBulkSlotRequest(req); errMsg != "" {
 			return c.Status(400).JSON(adminUtils.Response{Success: false, Message: errMsg})
 		}
-		if err := serviceAdminQanc.CreateSlot(db, req.SlotDate, req.MaxQueue); err != nil {
-			return c.Status(400).JSON(adminUtils.Response{Success: false, Message: "ไม่สามารถเพิ่มวันได้ เนื่องจากวันนี้มีอยู่ในระบบแล้ว"})
+		results := serviceAdminQanc.CreateBulkSlots(db, req.SlotDates, req.MaxQueue)
+		success := 0
+		for _, r := range results {
+			if r.Success {
+				success++
+			}
 		}
-		return c.JSON(adminUtils.Response{Success: true, Message: "เพิ่มวันสำเร็จ"})
+		return c.JSON(fiber.Map{
+			"success": true,
+			"message": fmt.Sprintf("เพิ่มสำเร็จ %d/%d วัน", success, len(results)),
+			"results": results,
+		})
 	}
 }
 

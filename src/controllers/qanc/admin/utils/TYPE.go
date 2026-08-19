@@ -1,9 +1,16 @@
 package adminQancUtils
 
-// SlotRequest - ข้อมูลสำหรับเพิ่มวันเปิดจองใหม่
-type SlotRequest struct {
-	SlotDate string `json:"slot_date"` // วันที่เปิดจอง (YYYY-MM-DD)
-	MaxQueue int    `json:"max_queue"` // จำนวนคิวสูงสุดต่อวัน
+// BulkSlotRequest - ข้อมูลสำหรับเพิ่มหลายวันพร้อมกัน
+type BulkSlotRequest struct {
+	SlotDates []string `json:"slot_dates"` // รายการวันที่ (YYYY-MM-DD)
+	MaxQueue  int      `json:"max_queue"`  // จำนวนคิวสูงสุดต่อวัน (ใช้เท่ากันทุกวัน)
+}
+
+// BulkSlotResult - ผลลัพธ์แต่ละวัน
+type BulkSlotResult struct {
+	SlotDate string `json:"slot_date"` // วันที่
+	Success  bool   `json:"success"`   // สำเร็จ/ไม่สำเร็จ
+	Message  string `json:"message"`   // ข้อความ error (ถ้ามี)
 }
 
 // ToggleSlotRequest - ข้อมูลสำหรับเปิด/ปิดรับจอง
