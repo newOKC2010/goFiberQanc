@@ -48,7 +48,16 @@ type BookingInfo struct {
 
 // Response - โครงสร้าง response มาตรฐาน
 type Response struct {
-	Success bool        `json:"success"`        // สำเร็จ/ไม่สำเร็จ
-	Message string      `json:"message"`        // ข้อความ
-	Data    interface{} `json:"data,omitempty"` // ข้อมูล (ถ้ามี)
+	Success    bool        `json:"success"`              // สำเร็จ/ไม่สำเร็จ
+	Message    string      `json:"message"`              // ข้อความ
+	Data       interface{} `json:"data,omitempty"`       // ข้อมูล (ถ้ามี)
+	Pagination *Pagination `json:"pagination,omitempty"` // ข้อมูล pagination (ถ้ามี)
+}
+
+// Pagination - ข้อมูล pagination
+type Pagination struct {
+	Count       int `json:"count"`        // จำนวน record ในหน้านี้
+	TotalCount  int `json:"total_count"`  // จำนวน record ทั้งหมด
+	TotalPages  int `json:"total_pages"`  // จำนวนหน้าทั้งหมด
+	CurrentPage int `json:"current_page"` // หน้าปัจจุบัน
 }

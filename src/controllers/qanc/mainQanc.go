@@ -100,14 +100,23 @@ func CancelBooking(db *sql.DB) fiber.Handler {
 
 func AdminGetSlots(db *sql.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		slots, err := serviceAdminQanc.GetAllSlots(db)
+		page := c.QueryInt("page", 1)
+		limit := c.QueryInt("limit", 10)
+		if page < 1 {
+			page = 1
+		}
+		if limit < 1 || limit > 100 {
+			limit = 10
+		}
+
+		slots, pagination, err := serviceAdminQanc.GetAllSlots(db, page, limit)
 		if err != nil {
 			return c.Status(500).JSON(adminUtils.Response{Success: false, Message: "ไม่สามารถดึงข้อมูลได้ กรุณาลองใหม่อีกครั้ง"})
 		}
 		if len(slots) == 0 {
 			return c.JSON(adminUtils.Response{Success: false, Message: "ยังไม่มีวันเปิดจองในระบบ", Data: []adminUtils.SlotInfo{}})
 		}
-		return c.JSON(adminUtils.Response{Success: true, Data: slots})
+		return c.JSON(adminUtils.Response{Success: true, Data: slots, Pagination: pagination})
 	}
 }
 
@@ -172,13 +181,22 @@ func AdminToggleSlot(db *sql.DB) fiber.Handler {
 func AdminGetBookings(db *sql.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		slotDate := c.Query("slot_date")
-		bookings, err := serviceAdminQanc.GetAllBookings(db, slotDate)
+		page := c.QueryInt("page", 1)
+		limit := c.QueryInt("limit", 10)
+		if page < 1 {
+			page = 1
+		}
+		if limit < 1 || limit > 100 {
+			limit = 10
+		}
+
+		bookings, pagination, err := serviceAdminQanc.GetAllBookings(db, slotDate, page, limit)
 		if err != nil {
 			return c.Status(500).JSON(adminUtils.Response{Success: false, Message: "ไม่สามารถดึงข้อมูลการจองได้ กรุณาลองใหม่อีกครั้ง"})
 		}
 		if len(bookings) == 0 {
 			return c.JSON(adminUtils.Response{Success: false, Message: "ยังไม่มีรายการจอง", Data: []adminUtils.BookingInfo{}})
 		}
-		return c.JSON(adminUtils.Response{Success: true, Data: bookings})
+		return c.JSON(adminUtils.Response{Success: true, Data: bookings, Pagination: pagination})
 	}
 }

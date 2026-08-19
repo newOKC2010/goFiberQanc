@@ -30,10 +30,13 @@ func GetBookingsBySlot(db *sql.DB, slotID int) ([]adminUtils.BookingInfo, error)
 	return scanBookings(rows)
 }
 
-// GetAllBookings - ดึงรายการจองทั้งหมด
+// GetAllBookings - ดึงรายการจองแบบ pagination
 // ถ้าระบุ slotDate จะกรองเฉพาะวันนั้น, ถ้าไม่ระบุจะดึงทุกวัน
-func GetAllBookings(db *sql.DB, slotDate string) ([]adminUtils.BookingInfo, error) {
-	query := `
+func GetAllBookings(db *sql.DB, slotDate string, page, limit int) ([]adminUtils.BookingInfo, *adminUtils.Pagination, error) {
+	offset := (page - 1) * limit
+
+	countQuery := `SELECT COUNT(*) FROM anc_bookings b JOIN anc_slots s ON s.id = b.slot_id`
+	dataQuery := `
 		SELECT b.id, s.slot_date::text, b.queue_no, b.full_name, b.phone,
 		       COALESCE(b.rights_type,''), b.is_first_pregnancy,
 		       b.previous_births, b.previous_miscarriages,
@@ -43,18 +46,43 @@ func GetAllBookings(db *sql.DB, slotDate string) ([]adminUtils.BookingInfo, erro
 		FROM anc_bookings b
 		JOIN anc_slots s ON s.id = b.slot_id
 	`
+
+	var totalCount int
 	var rows *sql.Rows
 	var err error
+
 	if slotDate != "" {
-		rows, err = db.Query(query+"WHERE s.slot_date = $1 ORDER BY b.queue_no", slotDate)
+		if err = db.QueryRow(countQuery+` WHERE s.slot_date = $1`, slotDate).Scan(&totalCount); err != nil {
+			return nil, nil, err
+		}
+		rows, err = db.Query(dataQuery+`WHERE s.slot_date = $1 ORDER BY b.queue_no LIMIT $2 OFFSET $3`, slotDate, limit, offset)
 	} else {
-		rows, err = db.Query(query + "ORDER BY s.slot_date, b.queue_no")
+		if err = db.QueryRow(countQuery).Scan(&totalCount); err != nil {
+			return nil, nil, err
+		}
+		rows, err = db.Query(dataQuery+`ORDER BY s.slot_date, b.queue_no LIMIT $1 OFFSET $2`, limit, offset)
 	}
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer rows.Close()
-	return scanBookings(rows)
+
+	bookings, err := scanBookings(rows)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	totalPages := (totalCount + limit - 1) / limit
+	if totalPages == 0 {
+		totalPages = 1
+	}
+	pagination := &adminUtils.Pagination{
+		Count:       len(bookings),
+		TotalCount:  totalCount,
+		TotalPages:  totalPages,
+		CurrentPage: page,
+	}
+	return bookings, pagination, nil
 }
 
 // scanBookings - helper function สำหรับแปลง SQL rows เป็น BookingInfo slice

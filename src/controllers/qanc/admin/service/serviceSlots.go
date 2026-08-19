@@ -7,9 +7,17 @@ import (
 	adminUtils "qanc/src/controllers/qanc/admin/utils"
 )
 
-// GetAllSlots - ดึงวันเปิดจองทั้งหมด (ตั้งแต่วันนี้เป็นต้นไป) พร้อมจำนวนที่จองแล้ว
-// ใช้สำหรับ admin ดูภาพรวม + สถานะเปิด/ปิด
-func GetAllSlots(db *sql.DB) ([]adminUtils.SlotInfo, error) {
+// GetAllSlots - ดึงวันเปิดจองทั้งหมด (ตั้งแต่วันนี้เป็นต้นไป) แบบ pagination
+func GetAllSlots(db *sql.DB, page, limit int) ([]adminUtils.SlotInfo, *adminUtils.Pagination, error) {
+	offset := (page - 1) * limit
+
+	var totalCount int
+	if err := db.QueryRow(`
+		SELECT COUNT(*) FROM anc_slots WHERE slot_date >= CURRENT_DATE
+	`).Scan(&totalCount); err != nil {
+		return nil, nil, err
+	}
+
 	rows, err := db.Query(`
 		SELECT s.id, s.slot_date::text, s.max_queue, COUNT(b.id) AS booked, s.is_active
 		FROM anc_slots s
@@ -17,9 +25,10 @@ func GetAllSlots(db *sql.DB) ([]adminUtils.SlotInfo, error) {
 		WHERE s.slot_date >= CURRENT_DATE
 		GROUP BY s.id, s.slot_date, s.max_queue, s.is_active
 		ORDER BY s.slot_date
-	`)
+		LIMIT $1 OFFSET $2
+	`, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer rows.Close()
 
@@ -27,11 +36,22 @@ func GetAllSlots(db *sql.DB) ([]adminUtils.SlotInfo, error) {
 	for rows.Next() {
 		var s adminUtils.SlotInfo
 		if err := rows.Scan(&s.ID, &s.SlotDate, &s.MaxQueue, &s.Booked, &s.IsActive); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		slots = append(slots, s)
 	}
-	return slots, nil
+
+	totalPages := (totalCount + limit - 1) / limit
+	if totalPages == 0 {
+		totalPages = 1
+	}
+	pagination := &adminUtils.Pagination{
+		Count:       len(slots),
+		TotalCount:  totalCount,
+		TotalPages:  totalPages,
+		CurrentPage: page,
+	}
+	return slots, pagination, nil
 }
 
 // CreateSlot - เพิ่มวันเปิดจองใหม่
