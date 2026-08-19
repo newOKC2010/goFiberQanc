@@ -7,13 +7,13 @@ export function proxy(request: NextRequest) {
 
   // ถ้าไม่มี token และพยายามเข้า /admin
   if (pathname.startsWith('/admin') && !token) {
-    const url = new URL('/login', request.url);
+    const url = new URL('/auth', request.url);
     url.searchParams.set('error', 'no_token');
     return NextResponse.redirect(url);
   }
 
-  // ถ้ามี token และอยู่หน้า /login ให้ไปหน้า /admin
-  if (pathname === '/login' && token) {
+  // ถ้ามี token และอยู่หน้า /auth ให้ไปหน้า /admin
+  if (pathname === '/auth' && token) {
     return NextResponse.redirect(new URL('/admin', request.url));
   }
 
@@ -30,5 +30,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/labView/:path*', '/auth']
+  matcher: ['/admin', '/admin/:path*', '/auth'],
 };
