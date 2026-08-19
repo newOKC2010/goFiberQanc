@@ -37,7 +37,7 @@ export const OtpModal = ({ isOpen, onClose, email, onVerify, loading = false }: 
       title="ยืนยัน OTP"
       contentClassName="!bg-white/80 !backdrop-blur-xl !border !border-white/50"
       icon={
-        <span className="material-symbols-outlined text-5xl text-blue-500"
+        <span className="material-symbols-outlined text-5xl text-pink-500"
           style={{
             fontVariationSettings: "'wght' 700",
             fontSize: 'clamp(2rem, 5vw, 3rem)',
@@ -73,14 +73,14 @@ export const OtpModal = ({ isOpen, onClose, email, onVerify, loading = false }: 
               customWidth={200}
               loading={loading}
               disabled={loading || otp.length !== 6}
-              className="rounded-2xl bg-gradient-to-r from-blue-400 to-cyan-500 hover:from-blue-500 hover:to-cyan-600 text-white"
+              className="rounded-2xl bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white"
               icon="check_circle"
             >
               ยืนยัน
             </Button>
           </div>
 
-          <p className="text-center text-blue-500 text-xs font-bold flex items-center justify-center gap-1">
+          <p className="text-center text-pink-500 text-xs font-bold flex items-center justify-center gap-1">
             <span className="material-symbols-outlined text-sm"
               style={{
                 fontVariationSettings: "'wght' 700",
