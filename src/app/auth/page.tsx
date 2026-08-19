@@ -8,6 +8,8 @@ import { OtpModal } from '@/app/auth/component/OTP/otpModal';
 import { handleLoginRequest } from '@/app/auth/request/handler/handlerReq';
 import { handleVerifyOtp } from '@/app/auth/verify/handler/handlerVerify';
 import { useErrorAlert } from '@/hooks/useErrorAlert';
+import { useLang } from '@/global/globalLang';
+import tr, { t } from '@/global/translations';
 
 import Loading from '@/components/loading/mainLoading';
 
@@ -18,6 +20,7 @@ function ErrorAlertWrapper() {
 
 export default function AuthPage() {
   const router = useRouter();
+  const { lang, toggleLang } = useLang();
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,7 +37,7 @@ export default function AuthPage() {
   const handleEmailChange = (value: string) => {
     setEmail(value);
     if (value && !validateEmail(value)) {
-      setEmailError('รูปแบบอีเมลไม่ถูกต้อง');
+      setEmailError(t(tr.auth.emailInvalid, lang));
     } else {
       setEmailError('');
     }
@@ -44,12 +47,12 @@ export default function AuthPage() {
     e.preventDefault();
     
     if (!email) {
-      setEmailError('กรุณากรอกอีเมล');
+      setEmailError(t(tr.auth.emailRequired, lang));
       return;
     }
     
     if (!validateEmail(email)) {
-      setEmailError('รูปแบบอีเมลไม่ถูกต้อง');
+      setEmailError(t(tr.auth.emailInvalid, lang));
       return;
     }
     
@@ -85,6 +88,24 @@ export default function AuthPage() {
         <ErrorAlertWrapper />
       </Suspense>
       <div className="min-h-screen relative flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-50 via-cyan-50 to-sky-50 animate-fade-in">
+        {/* Top controls */}
+        <div className="absolute top-5 left-5 right-5 z-20 flex items-center justify-between">
+          <button
+            onClick={() => router.push('/qanc')}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/70 backdrop-blur-md border border-white/60 shadow-sm text-gray-500 text-xs font-bold hover:bg-white/90 hover:shadow-md transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+          >
+            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'wght' 600", fontSize: '1rem' }}>arrow_back</span>
+            {lang === 'th' ? 'หน้าหลัก' : 'Home'}
+          </button>
+          <button
+            onClick={toggleLang}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/70 backdrop-blur-md border border-white/60 shadow-sm text-gray-500 text-xs font-bold hover:bg-white/90 hover:shadow-md transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
+          >
+            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'wght' 600", fontSize: '1rem' }}>translate</span>
+            {lang === 'th' ? 'EN' : 'ไทย'}
+          </button>
+        </div>
+
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-200/40 rounded-full blur-[100px] animate-pulse" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-200/40 rounded-full blur-[100px] animate-pulse delay-1000" />
         <div className="absolute top-[40%] left-[60%] w-[20%] h-[20%] bg-sky-200/30 rounded-full blur-[80px] animate-bounce duration-[5000ms]" />
@@ -108,23 +129,23 @@ export default function AuthPage() {
               </div>
 
               <h1 className="text-3xl text-gray-700 font-bold mb-2 animate-fade-in delay-400">
-                QANC Admin
+                {t(tr.auth.title, lang)}
               </h1>
               <p className="text-gray-600 text-sm font-bold animate-fade-in delay-500">
-                ระบบจองคิวตรวจ ANC Online
+                {t(tr.auth.subtitle, lang)}
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6 animate-slide-up-card delay-600">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-700 ml-4">
-                  กรุณาระบุ อีเมลที่สมัครใช้งาน
+                  {t(tr.auth.emailLabel, lang)}
                 </label>
                 <InputText
                   type="text"
                   value={email}
                   onChange={(e) => handleEmailChange(e.target.value)}
-                  placeholder="name@example.com"
+                  placeholder={t(tr.auth.emailPlaceholder, lang)}
                   maxWidth={400}
                   icon="mail"
                   error={emailError}
@@ -141,14 +162,14 @@ export default function AuthPage() {
                   className="w-[200px] sm:w-auto sm:min-w-[200px] bg-gradient-to-r from-blue-400 to-cyan-500 hover:from-blue-500 hover:to-cyan-600 text-white rounded-2xl"
                   icon="login"
                 >
-                  เข้าสู่ระบบ
+                  {t(tr.auth.loginBtn, lang)}
                 </Button>
               </div>
             </form>
 
             <div className="mt-4 text-center animate-fade-in delay-700">
               <p className="text-xs text-slate-400 font-bold">
-                เฉพาะเจ้าหน้าที่ที่ได้รับอนุญาตเท่านั้น
+                {t(tr.auth.onlyStaff, lang)}
               </p>
             </div>
           </div>
@@ -164,7 +185,7 @@ export default function AuthPage() {
 
         {showLoginSuccess && (
           <div className="fixed inset-0 bg-white/60 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in">
-            <Loading message="กำลังเข้าสู่ระบบ" delay={2000} fullScreen={false} />
+            <Loading message={t(tr.auth.loggingIn, lang)} delay={2000} fullScreen={false} />
           </div>
         )}
       </div>

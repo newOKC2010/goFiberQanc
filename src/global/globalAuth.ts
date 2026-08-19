@@ -11,6 +11,8 @@ export interface AdminUser {
   role: string;
 }
 
+export type UserViewLabInfo = AdminUser;
+
 function parseTimeToSeconds(time: string): number {
   const value = parseInt(time);
   const unit = time.slice(-1);

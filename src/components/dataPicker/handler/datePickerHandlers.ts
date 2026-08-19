@@ -6,17 +6,26 @@ export const THAI_MONTHS = [
   'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
 ]
 
+export const EN_MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+]
+
 export const THAI_DAYS = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']
+export const EN_DAYS   = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
 // Date formatting functions
 export const formatThaiDate = (dateString: string): string => {
   if (!dateString) return ''
-  
   const [year, month, day] = dateString.split('-').map(Number)
-  const thaiYear = year + 543
-  const thaiMonth = THAI_MONTHS[month - 1]
-  
-  return `${day} ${thaiMonth} ${thaiYear}`
+  return `${day} ${THAI_MONTHS[month - 1]} ${year + 543}`
+}
+
+export const formatDisplayDate = (dateString: string, lang: string): string => {
+  if (!dateString) return ''
+  const [year, month, day] = dateString.split('-').map(Number)
+  if (lang === 'en') return `${day} ${EN_MONTHS[month - 1]} ${year}`
+  return `${day} ${THAI_MONTHS[month - 1]} ${year + 543}`
 }
 
 export const formatAPIDate = (date: Date): string => {
@@ -71,4 +80,8 @@ export const isSameDate = (date1: string, date2: string): boolean => {
 
 export const isToday = (date: Date): boolean => {
   return formatAPIDate(date) === getTodayDate()
+}
+
+export const isPastOrToday = (date: Date): boolean => {
+  return formatAPIDate(date) <= getTodayDate()
 }

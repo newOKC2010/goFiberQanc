@@ -36,16 +36,13 @@ export const Modal = ({
         setTimeout(() => {
           setShouldRender(false);
           setIsClosing(false);
-        }, 500);
+        }, 200);
       }
     }
   }, [isOpen, shouldRender]);
 
   const handleClose = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      onClose();
-    }, 500);
+    onClose();
   };
 
   if (!shouldRender) return null;

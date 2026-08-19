@@ -4,6 +4,10 @@ export interface DatePickerProps {
   selectedDate: string
   onDateChange: (date: string) => void
   closeCalendar?: number
+  label?: string
+  placeholder?: string
+  lang?: string
+  disablePastAndToday?: boolean
 }
 
 export interface YearSelectorProps {

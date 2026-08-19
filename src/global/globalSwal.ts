@@ -47,7 +47,8 @@ export function showAlert(
     timer?: number;
     timerProgressBar?: boolean;
   }> = {}, 
-  buttonColors?: { confirm?: string; cancel?: string }
+  buttonColors?: { confirm?: string; cancel?: string },
+  lang: 'th' | 'en' = 'th'
 ) {
     const defaultOptions = {
         allowOutsideClick: true,
@@ -61,7 +62,7 @@ export function showAlert(
         title: title,
         text: text,
         icon: icon,
-        confirmButtonText: 'ตกลง',
+        confirmButtonText: lang === 'th' ? 'ตกลง' : 'OK',
         confirmButtonColor: buttonColors?.confirm || '#667eea',
         cancelButtonColor: buttonColors?.cancel,
         allowOutsideClick: finalOptions.allowOutsideClick,

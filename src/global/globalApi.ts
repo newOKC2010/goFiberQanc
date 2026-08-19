@@ -13,6 +13,7 @@ export const API_ENDPOINTS = {
   },
   ADMIN: {
     SLOTS: '/qanc/admin/slots',
+    SLOTS_BULK: '/qanc/admin/slots/bulk',
     SLOTS_TOGGLE: '/qanc/admin/slots/toggle',
     BOOKINGS: '/qanc/admin/bookings',
   },

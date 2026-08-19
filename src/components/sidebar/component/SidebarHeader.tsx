@@ -7,7 +7,7 @@ interface SidebarHeaderProps {
 
 export default function SidebarHeader({ user, onClose }: SidebarHeaderProps) {
   return (
-    <div className="p-6 border-b border-gray-200 relative">
+    <div className="p-6 border-b border-pink-100 relative">
       {/* Close Button - Mobile Only */}
       <button
         onClick={onClose}
@@ -25,10 +25,13 @@ export default function SidebarHeader({ user, onClose }: SidebarHeaderProps) {
       </button>
 
       <div className="flex items-center gap-3">
-        <span className="material-symbols-outlined text-blue-500 text-3xl" style={{ fontVariationSettings: "'wght' 700" }}>
-          biotech
+        <span className="material-symbols-outlined text-pink-400 text-3xl" style={{ fontVariationSettings: "'wght' 700" }}>
+          pregnant_woman
         </span>
-        <h1 className="text-xl font-bold text-gray-800">LAB VIEW</h1>
+        <div>
+          <h1 className="text-xl font-bold text-gray-800">QANC</h1>
+          <p className="text-xs text-gray-400 font-bold">ANC Booking System</p>
+        </div>
       </div>
       
       {user && (

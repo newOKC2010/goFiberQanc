@@ -14,22 +14,13 @@ interface SidebarProps {
   user: UserViewLabInfo | null;
 }
 
-const USER_MENUS = [
+const ANC_MENUS = [
   {
-    name: 'ผลการตรวจ Lab',
-    icon: 'biotech',
+    name: 'คลินิกฝากครรภ์ (ANC)',
+    icon: 'event_note',
     children: [
-      { name: 'ดูผลการตรวจ', path: '/labView/result', icon: 'lab_research' },
-    ]
-  },
-];
-
-const ADMIN_MENUS = [
-  {
-    name: 'จัดการผู้ใช้งาน',
-    icon: 'manage_accounts',
-    children: [
-      { name: 'รายการผู้ใช้งาน', path: '/labView/users', icon: 'group' },
+      { name: 'รายการจองคิว',     path: '/admin/bookings', icon: 'format_list_bulleted' },
+      { name: 'จัดการวันเปิดจอง', path: '/admin/slots',    icon: 'edit_calendar' },
     ]
   },
 ];
@@ -43,7 +34,7 @@ export default function Sidebar({ user }: SidebarProps) {
   const toggleSidebar = () => setIsOpen(true);
 
   const isAdmin = user?.role === USER_ROLES.ADMIN || user?.role === USER_ROLES.SUPER_ADMIN;
-  const filteredMenus = isAdmin ? [...USER_MENUS, ...ADMIN_MENUS] : USER_MENUS;
+  const filteredMenus = isAdmin ? ANC_MENUS : [];
 
   return (
     <>
@@ -52,7 +43,7 @@ export default function Sidebar({ user }: SidebarProps) {
 
       <aside className={`
         fixed lg:static inset-y-0 left-0 z-40
-        w-64 bg-white border-r border-gray-200 flex flex-col h-screen
+        w-64 bg-white border-r border-pink-100 flex flex-col h-screen
         transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
